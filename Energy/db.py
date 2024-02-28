@@ -111,6 +111,7 @@ def AddDevices(email, devices):
 															"voltage" : [],
 															"current" : [],
 															"energy" : [],
+															"upTime" : [],
 															"power" : []
 
 														 },
@@ -132,7 +133,7 @@ def AddDevices(email, devices):
 
 
 
-def AddDeviceData(email, device_ID, date, voltage, current, energy, power):
+def AddDeviceData(email, device_ID, date, voltage, current, upTime, power):
 	# device_data = {"email" : email, 
 	# 				"devices" : {
 	# 								"<deviceID>" : { 
@@ -157,7 +158,11 @@ def AddDeviceData(email, device_ID, date, voltage, current, energy, power):
 			data["devices"][device_ID]["data"]["voltage"].append(voltage)
 			data["devices"][device_ID]["data"]["current"].append(current)
 			data["devices"][device_ID]["data"]["energy"].append(energy)
+			data["devices"][device_ID]["data"]["upTime"].append(upTime)
 			data["devices"][device_ID]["data"]["power"].append(power)
+
+			data["devices"][device_ID]['totalEnergy'] = power * (upTime / 60)
+			data["devices"][device_ID]['totalCost'] = data["devices"][device_ID]['totalEnergy']
 
 			f = { '_id': data["_id"]}
 			new_values = { "$set": { "devices" : data["devices"]} }

@@ -1,0 +1,2 @@
+[PROD]
+DB_URI = mongodb+srv://zain:zain@mycluster.mjkdltm.mongodb.net/MyCluster

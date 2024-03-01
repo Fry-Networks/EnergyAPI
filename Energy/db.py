@@ -157,7 +157,7 @@ def AddDeviceData(email, device_ID, date, voltage, current, upTime, power):
 			data["devices"][device_ID]["data"]["date"].append(date)
 			data["devices"][device_ID]["data"]["voltage"].append(voltage)
 			data["devices"][device_ID]["data"]["current"].append(current)
-			data["devices"][device_ID]["data"]["energy"].append(energy)
+			data["devices"][device_ID]["data"]["energy"].append(power * (upTime / 60))
 			data["devices"][device_ID]["data"]["upTime"].append(upTime)
 			data["devices"][device_ID]["data"]["power"].append(power)
 

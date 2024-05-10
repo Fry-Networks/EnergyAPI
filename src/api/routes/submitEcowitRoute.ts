@@ -1,5 +1,6 @@
 import axios from "axios";
 import express from "express";
+import { Device } from "types/ecowittTypes.js";
 import { newApiKeyEvent } from "../../db/connect.js";
 import { Ecowitt, Ecowittmodel } from "../../db/models/ecowitt-account.js";
 import { getUserByAddress } from "../../db/models/users-schema.js";
@@ -20,7 +21,7 @@ async function fetchDataDynamically() {
       const apiResponse = response.data;
 
       if (apiResponse.code === 0) {
-        const devices = apiResponse.data.list.map((device: any) => ({
+        const devices = apiResponse.data.list.map((device: Device ) => ({
           id: device.id.toString(),
           deviceMAC: device.mac,
           infos: {
@@ -98,13 +99,7 @@ router.post("/api/submitEcokey", async function (req, res) {
     const user = await getUserByAddress(data.address);
 
     const devices = apiResponse.data.list.map(
-      (device: {
-        id: { toString: () => any };
-        mac: any;
-        latitude: any;
-        longitude: any;
-        name: any;
-      }) => ({
+      (device: Device) => ({
         id: device.id.toString(),
         deviceMAC: device.mac,
         infos: {

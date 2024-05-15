@@ -1,12 +1,12 @@
 import axios from "axios";
 import express from "express";
-import { Shelly, ShellyAccountModel } from "../../db/models/shelly-account.js";
+import { Shelly, ShellyModel } from "../../db/models/shelly-account.js";
 
 const router = express.Router();
 
 const fetchDataAndUpdate = async () => {
     try {
-        const shellyAccounts = await ShellyAccountModel.find();
+        const shellyAccounts = await ShellyModel.find();
 
         for (const account of shellyAccounts) {
             const { serverUrl, deviceId, authKey, walletaddress } = account;
@@ -30,7 +30,7 @@ const fetchDataAndUpdate = async () => {
             const responseData = response.data.data;
             const { device_status } = responseData;
 
-            const savedAccount = await ShellyAccountModel.findOne({ deviceId: device_status.id });
+            await ShellyModel.findOne({ deviceId: device_status.id });
 
             // Update the latest data in ShellyAccount (overwrite if exists)
             const shellyAccountData = {
@@ -47,7 +47,7 @@ const fetchDataAndUpdate = async () => {
                 }
             };
 
-            await ShellyAccountModel.findOneAndUpdate(
+            await ShellyModel.findOneAndUpdate(
                 { deviceId: device_status.id },
                 shellyAccountData,
                 { upsert: true }
@@ -77,8 +77,26 @@ fetchDataAndUpdate();
 setInterval(fetchDataAndUpdate, 10 * 60 * 1000); // Run every 10 minutes
 
 
+function extractErrorMessage(errors: any) {
+    if (errors && typeof errors === 'object' && Object.keys(errors).length > 0) {
+        const firstErrorKey = Object.keys(errors)[0];
+        return errors[firstErrorKey];
+    }
+    return "An error occurred";
+}
+
 router.post("/api/submitShellykey", async (req, res) => {
     const { serverUrl, deviceId, authKey, address } = req.body;
+    const existingKey = await ShellyModel.exists({
+        deviceId: deviceId,
+      });
+  
+      if (existingKey) {
+        return res.status(409).send({
+          message: "API Key already exists in the database.",
+          status: "ERROR",
+        });
+      }
     try {
         const formData = {
             id: deviceId,
@@ -102,36 +120,26 @@ router.post("/api/submitShellykey", async (req, res) => {
         const responseData = response.data.data;
         const { device_status } = responseData;
 
-        // Save latest data in ShellyAccount (overwrite if exists)
+        // Save latest data in ShellyAccount (without overwriting)
         const shellyAccountData = {
-            walletaddress: address,
-            serverUrl,
-            deviceId: device_status.id,
-            authKey,
-            data: {
-                device_status: device_status,
-            },
-            metadata: {
-                data_type: "shelly"
-            }
+          deviceId,
+          authKey,
+          serverUrl,
+          address,
+          devices: [{ device_status }]
         };
-
-        await ShellyAccountModel.findOneAndUpdate(
-            { deviceId: device_status.id },
-            shellyAccountData,
-            { upsert: true }
-        );
-
+    
+        await ShellyModel.create(shellyAccountData);
+    
         // Save historical data in Shelly collection
         const historicalData = new Shelly({
-            device_status: device_status,
-            timestamp: new Date(),
-            metadata: {
-                data_type: "shelly",
-                deviceId: device_status.id
-            }
+          device_status,
+          metadata: {
+            data_type: "shelly",
+            deviceId
+          }
         });
-
+    
         await historicalData.save();
 
         res.status(200).send({
@@ -143,7 +151,7 @@ router.post("/api/submitShellykey", async (req, res) => {
         console.error("Error:", error);
         console.error("Message:", error.message);
         res.status(500).send({
-            message: error?.response?.data,
+            message: extractErrorMessage(error?.response?.data?.errors),
             status: "ERROR",
         });
     }

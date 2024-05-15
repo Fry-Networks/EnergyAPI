@@ -75,9 +75,6 @@ const ShellyAccountSchema = new mongoose.Schema({
     }
 });
 
-// Define the model for storing latest data
-export const ShellyAccountModel = mongoose.model("ShellyAccount", ShellyAccountSchema);
-
 // Define schema for storing historical data with timestamps
 const ShellySchema = new mongoose.Schema({
   device_status: {
@@ -147,5 +144,17 @@ const ShellySchema = new mongoose.Schema({
   }
 });
 
+const shellyAccountSchema = new mongoose.Schema({
+  deviceId: { type: String, required: true },
+  address: { type: String, required: true },
+  serverUrl:{ type: String, required: true },
+  authKey: { type: String, required: true },
+  devices: [ShellySchema]
+});
+// Define the model for storing latest data
+const ShellyAccountModel = mongoose.model("ShellyAccount", ShellyAccountSchema);
+
 // Define the model for storing historical data
 export const Shelly = mongoose.model("Shelly", ShellySchema);
+
+export const ShellyModel = ShellyAccountModel.discriminator('shelly-account', shellyAccountSchema);

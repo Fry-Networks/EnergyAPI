@@ -124,6 +124,7 @@ router.post("/api/submitShellykey", async (req, res) => {
         const shellyAccountData = {
           deviceId,
           authKey,
+          api_type: "shelly",
           serverUrl,
           address,
           devices: [{ device_status }]

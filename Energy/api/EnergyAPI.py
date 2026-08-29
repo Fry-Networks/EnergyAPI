@@ -1,6 +1,7 @@
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import Blueprint, request, jsonify
 from Energy.db import Hello, AddUser, AddUserCloudCredentials, UserExists, GetUser, AddDevices, GetUsageDataFor
@@ -21,7 +22,7 @@ def Login():
 	if user_data is None :
 		return {"msg" : "Bad username or password"}, 401
 
-	if password != user_data["password"]:
+	if not check_password_hash(user_data["password"], password):
 		return {"msg": "Bad username or password"}, 401
 
 	access_token = create_access_token(identity=email)
@@ -39,9 +40,7 @@ def CreateUser():
 
 	email = data['email']
 	name = data['name']
-	password = data['password']
-	
-	# password = generate_password_hash(request.form["password"])
+	password = generate_password_hash(data['password'])
 
 	if not UserExists(email):
 		AddUser(email, name, password)
